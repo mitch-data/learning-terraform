@@ -14,11 +14,56 @@ data "aws_ami" "app_ami" {
   owners = ["979382823631"] # Bitnami
 }
 
-resource "aws_instance" "web" {
+
+data "aws_vpc" "default" {
+  default = true
+}
+
+resource "aws_instance" "blog" {
   ami           = data.aws_ami.app_ami.id
   instance_type = var.instance_type
 
+  vpc_security_group_ids = [aws_security_group.blog.id]
+
   tags = {
-    Name = "HelloWorld"
+    Name = "Learning Terraform"
   }
+}
+
+# Define Security Group for AWS instance
+resource "aws_security_group" "blog" {
+  name        = "blog"
+  description = "Allow http and https in. Allow everything out"
+
+  vpc_id      = data.aws_vpc.default.id
+}
+
+resource "aws_security_group_rule" "blog_http_in" {
+  type        = "ingress"
+  from_port   = 80
+  to_port     = 80
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"] # define networks
+
+  security_group_id = aws_security_group.blog.id
+}
+
+resource "aws_security_group_rule" "blog_https_in" {
+  type        = "ingress"
+  from_port   = 443
+  to_port     = 433
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"] # define networks
+
+  security_group_id = aws_security_group.blog.id
+}
+
+resource "aws_security_group_rule" "blog_everything_out" {
+  type        = "engress"
+  from_port   = 0  # allow any port
+  to_port     = 0 
+  protocol    = "-1" # allow all protocol
+  cidr_blocks = ["0.0.0.0/0"] # define networks
+
+  security_group_id = aws_security_group.blog.id
 }
